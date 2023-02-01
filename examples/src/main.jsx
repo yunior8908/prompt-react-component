@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { PromptProvider } from "prompt-react-router-dom";
+import { PromptProvider } from "prompt-react-component";
 import App from "./App";
 import "./index.css";
 import {
@@ -42,7 +42,10 @@ const router = createBrowserRouter([
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <PromptProvider value={router.subscribe}>
+  <PromptProvider
+    routesSubscribe={router.subscribe}
+    extractPathname="location.pathname"
+  >
     <RouterProvider router={router} />
   </PromptProvider>
 );

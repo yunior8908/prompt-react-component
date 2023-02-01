@@ -1,26 +1,34 @@
-import * as React from "react";
-import { createBrowserRouter } from "react-router-dom";
+import React, { createContext, useContext, useMemo } from "react";
 
-const defaultRoutesConfig = createBrowserRouter([{}]);
+type ContextValueType = {
+  routesSubscribe: (data: any) => () => void;
+  extractPathname: string;
+};
 
-const routerListeningContext = React.createContext(
-  defaultRoutesConfig.subscribe
-);
+const RoutesSubscribeContext = createContext<ContextValueType>({
+  routesSubscribe: () => () => {},
+  extractPathname: "",
+});
 
 export function useRouterListening() {
-  return React.useContext(routerListeningContext);
+  return useContext(RoutesSubscribeContext);
 }
 
 export function PromptProvider({
-  value,
+  routesSubscribe,
+  extractPathname,
   children,
-}: {
-  value: typeof defaultRoutesConfig.subscribe;
+}: ContextValueType & {
   children: React.ReactNode;
 }) {
+  const value = useMemo(
+    () => ({ routesSubscribe, extractPathname }),
+    [routesSubscribe, extractPathname]
+  );
+
   return (
-    <routerListeningContext.Provider value={value}>
+    <RoutesSubscribeContext.Provider value={value}>
       {children}
-    </routerListeningContext.Provider>
+    </RoutesSubscribeContext.Provider>
   );
 }

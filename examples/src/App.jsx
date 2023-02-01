@@ -1,12 +1,17 @@
-import React, { useEffect } from "react";
-import { Prompt } from "prompt-react-router-dom";
+import React from "react";
+import { Prompt } from "prompt-react-component";
+import { useNavigate } from "react-router-dom";
+
 import "./App.css";
 
 function App() {
+  const navigate = useNavigate();
+
   return (
     <div className="App">
       <h1>prompt-react-router-dom</h1>
-      <Prompt disabledNavigation>
+      <h3>now depends of the current routing feature is used</h3>
+      <Prompt disabledNavigation navigate={navigate}>
         {({ onCancel, onOk }) => (
           <dialog open>
             <p>Are you sure you want to leave?</p>

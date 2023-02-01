@@ -1,72 +1,93 @@
-import * as React from "react";
-import { useLocation, useNavigate, Location } from "react-router-dom";
+import { useState, useRef, useCallback, useEffect } from "react";
+import type { ReactNode } from "react";
 
 import { useRouterListening } from "./PromptProvider";
 
+function setNestedValue(obj: any, path: string, value: any) {
+  try {
+    const keys = path.split(".");
+    const lastKey = keys.pop() as string;
+    const lastObj = keys.reduce((obj, key) => obj[key], obj);
+    lastObj[lastKey] = value;
+
+    return obj;
+  } catch (e) {
+    return obj;
+  }
+}
+
 export function Prompt({
   disabledNavigation,
+  navigate,
   children,
 }: {
   disabledNavigation: Boolean;
+  navigate: (path: string) => void;
   children?:
-    | React.ReactNode
+    | ReactNode
     | (({
         onCancel,
         onOk,
       }: {
         onCancel: () => void;
         onOk: () => void;
-      }) => React.ReactNode);
+      }) => ReactNode);
 }) {
-  const [showChildren, setShowChildren] = React.useState(false);
+  const [showChildren, setShowChildren] = useState(false);
 
-  const navigate = useNavigate();
+  const { routesSubscribe, extractPathname } = useRouterListening();
 
-  const listen = useRouterListening();
-
-  const locationRef = React.useRef<{
-    currentPath: Location;
-    targetPath: Location | null;
+  const locationRef = useRef<{
+    currentPath: string;
+    targetPath: string | null;
   }>({
-    currentPath: useLocation(),
+    currentPath: window.location.pathname,
     targetPath: null,
   });
 
-  const unsubscribeRef = React.useRef(() => {});
+  const unsubscribeRef = useRef(() => {});
 
-  const onCancel = React.useCallback(() => {
+  const onCancel = useCallback(() => {
     setShowChildren(false);
   }, []);
 
-  const onOk = React.useCallback(() => {
+  const onOk = useCallback(() => {
     unsubscribeRef.current();
 
-    if (locationRef.current.targetPath?.pathname) {
-      navigate(locationRef.current.targetPath.pathname);
+    if (locationRef.current.targetPath) {
+      navigate(locationRef.current.targetPath);
     }
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let unsubscribe = () => {};
 
-    unsubscribe = listen((data) => {
+    unsubscribe = routesSubscribe((data: any) => {
+      const dataPathname = extractPathname
+        .split(".")
+        .reduce((obj, key) => obj[key], data);
+
       if (disabledNavigation === true) {
-        if (
-          data.location.pathname !== locationRef.current.currentPath.pathname
-        ) {
+        if (dataPathname !== locationRef.current.currentPath) {
           setShowChildren(true);
         }
 
-        locationRef.current.targetPath = { ...data.location };
-        data.location.pathname = locationRef.current.currentPath.pathname;
+        locationRef.current.targetPath = dataPathname;
+
+        setNestedValue(
+          data,
+          extractPathname as string,
+          locationRef.current.currentPath
+        );
       }
+
       return data;
     });
 
     unsubscribeRef.current = unsubscribe;
 
     return () => unsubscribe();
-  }, [listen, disabledNavigation]);
+  }, [routesSubscribe, disabledNavigation, extractPathname]);
 
   if (!showChildren) return null;
 
