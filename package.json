@@ -1,0 +1,24 @@
+{
+  "name": "prompt-react-router-dom",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "Yunior Chavez Calderin",
+  "license": "ISC",
+  "scripts": {
+    "clean": "rm -rf ./dist",
+    "build": "npm run clean && tsc && cp package.json README.md ./dist"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "peerDependencies": {
+    "react-router-dom": "6.8.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.27",
+    "typescript": "^4.9.5"
+  }
+}
