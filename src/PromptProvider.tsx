@@ -1,13 +1,15 @@
 import React, { createContext, useContext, useMemo } from "react";
 
 type ContextValueType = {
-  routesSubscribe: (data: any) => () => void;
-  extractPathname: string;
+  subscriber: (data: any) => () => void;
+  nextPathFromSubscriber: string;
+  onSuccess: (pathname: string) => void;
 };
 
 const RoutesSubscribeContext = createContext<ContextValueType>({
-  routesSubscribe: () => () => {},
-  extractPathname: "",
+  subscriber: () => () => {},
+  nextPathFromSubscriber: "",
+  onSuccess: () => {},
 });
 
 export function useRouterListening() {
@@ -15,15 +17,16 @@ export function useRouterListening() {
 }
 
 export function PromptProvider({
-  routesSubscribe,
-  extractPathname,
+  subscriber,
+  nextPathFromSubscriber,
+  onSuccess,
   children,
 }: ContextValueType & {
   children: React.ReactNode;
 }) {
   const value = useMemo(
-    () => ({ routesSubscribe, extractPathname }),
-    [routesSubscribe, extractPathname]
+    () => ({ subscriber, nextPathFromSubscriber, onSuccess }),
+    [subscriber, nextPathFromSubscriber, onSuccess]
   );
 
   return (
@@ -32,3 +35,7 @@ export function PromptProvider({
     </RoutesSubscribeContext.Provider>
   );
 }
+
+PromptProvider.defaultProps = {
+  onSuccess: () => {},
+};

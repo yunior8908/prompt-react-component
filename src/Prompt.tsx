@@ -18,11 +18,9 @@ function setNestedValue(obj: any, path: string, value: any) {
 
 export function Prompt({
   disabledNavigation,
-  navigate,
   children,
 }: {
   disabledNavigation: Boolean;
-  navigate: (path: string) => void;
   children?:
     | ReactNode
     | (({
@@ -35,7 +33,8 @@ export function Prompt({
 }) {
   const [showChildren, setShowChildren] = useState(false);
 
-  const { routesSubscribe, extractPathname } = useRouterListening();
+  const { subscriber, nextPathFromSubscriber, onSuccess } =
+    useRouterListening();
 
   const locationRef = useRef<{
     currentPath: string;
@@ -47,23 +46,23 @@ export function Prompt({
 
   const unsubscribeRef = useRef(() => {});
 
-  const onCancel = useCallback(() => {
+  const cancelFn = useCallback(() => {
     setShowChildren(false);
   }, []);
 
-  const onOk = useCallback(() => {
+  const acceptFn = useCallback(() => {
     unsubscribeRef.current();
 
     if (locationRef.current.targetPath) {
-      navigate(locationRef.current.targetPath);
+      onSuccess(locationRef.current.targetPath);
     }
-  }, []);
+  }, [onSuccess]);
 
   useEffect(() => {
     let unsubscribe = () => {};
 
-    unsubscribe = routesSubscribe((data: any) => {
-      const dataPathname = extractPathname
+    unsubscribe = subscriber((data: any) => {
+      const dataPathname = nextPathFromSubscriber
         .split(".")
         .reduce((obj, key) => obj[key], data);
 
@@ -76,7 +75,7 @@ export function Prompt({
 
         setNestedValue(
           data,
-          extractPathname as string,
+          nextPathFromSubscriber as string,
           locationRef.current.currentPath
         );
       }
@@ -87,11 +86,11 @@ export function Prompt({
     unsubscribeRef.current = unsubscribe;
 
     return () => unsubscribe();
-  }, [routesSubscribe, disabledNavigation, extractPathname]);
+  }, [subscriber, disabledNavigation, nextPathFromSubscriber]);
 
   if (!showChildren) return null;
 
   return typeof children === "function"
-    ? children({ onCancel, onOk })
+    ? children({ cancelFn, acceptFn })
     : children || null;
 }
