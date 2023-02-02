@@ -1,2 +1,2 @@
 export { PromptProvider, useRouterListening } from "./PromptProvider";
-export { Prompt } from "./Prompt";
+export { Prompt, usePrompt } from "./Prompt";

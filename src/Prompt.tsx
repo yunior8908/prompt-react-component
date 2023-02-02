@@ -94,3 +94,66 @@ export function Prompt({
     ? children({ cancelFn, acceptFn })
     : children || null;
 }
+
+export function usePrompt(disabledNavigation: boolean) {
+  const [canRender, setCanRender] = useState(false);
+
+  const { subscriber, nextPathFromSubscriber, onSuccess } =
+    useRouterListening();
+
+  const locationRef = useRef<{
+    currentPath: string;
+    targetPath: string | null;
+  }>({
+    currentPath: window.location.pathname,
+    targetPath: null,
+  });
+
+  const unsubscribeRef = useRef(() => {});
+
+  const cancelFn = useCallback(() => {
+    setCanRender(false);
+  }, []);
+
+  const acceptFn = useCallback(() => {
+    unsubscribeRef.current();
+
+    if (locationRef.current.targetPath) {
+      onSuccess(locationRef.current.targetPath);
+    }
+  }, [onSuccess]);
+
+  useEffect(() => {
+    let unsubscribe = () => {};
+
+    unsubscribe = subscriber((data: any) => {
+      console.log({ data });
+
+      const dataPathname = nextPathFromSubscriber
+        .split(".")
+        .reduce((obj, key) => obj[key], data);
+
+      if (disabledNavigation === true) {
+        if (dataPathname !== locationRef.current.currentPath) {
+          setCanRender(true);
+        }
+
+        locationRef.current.targetPath = dataPathname;
+
+        setNestedValue(
+          data,
+          nextPathFromSubscriber as string,
+          locationRef.current.currentPath
+        );
+      }
+
+      return data;
+    });
+
+    unsubscribeRef.current = unsubscribe;
+
+    return () => unsubscribe();
+  }, [subscriber, disabledNavigation, nextPathFromSubscriber]);
+
+  return { canRender, cancelFn, acceptFn };
+}
