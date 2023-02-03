@@ -24,11 +24,11 @@ export function Prompt({
   children?:
     | ReactNode
     | (({
-        onCancel,
-        onOk,
+        cancelFn,
+        acceptFn,
       }: {
-        onCancel: () => void;
-        onOk: () => void;
+        cancelFn: () => void;
+        acceptFn: () => void;
       }) => ReactNode);
 }) {
   const [showChildren, setShowChildren] = useState(false);
@@ -62,9 +62,7 @@ export function Prompt({
     let unsubscribe = () => {};
 
     unsubscribe = subscriber((data: any) => {
-      const dataPathname = nextPathFromSubscriber
-        .split(".")
-        .reduce((obj, key) => obj[key], data);
+      const dataPathname = nextPathFromSubscriber(data);
 
       if (disabledNavigation === true) {
         if (dataPathname !== locationRef.current.currentPath) {
@@ -73,11 +71,7 @@ export function Prompt({
 
         locationRef.current.targetPath = dataPathname;
 
-        setNestedValue(
-          data,
-          nextPathFromSubscriber as string,
-          locationRef.current.currentPath
-        );
+        setNestedValue(data, "", locationRef.current.currentPath);
       }
 
       return data;
@@ -127,11 +121,23 @@ export function usePrompt(disabledNavigation: boolean) {
     let unsubscribe = () => {};
 
     unsubscribe = subscriber((data: any) => {
-      console.log({ data });
+      let pathProperty: string[] = [];
 
-      const dataPathname = nextPathFromSubscriber
-        .split(".")
-        .reduce((obj, key) => obj[key], data);
+      const proxyValidator = {
+        get(target: any, key: string): Function {
+          pathProperty.push(key);
+
+          if (typeof target[key] === "object" && target[key] !== null) {
+            return new Proxy(target[key], proxyValidator);
+          } else {
+            return target[key];
+          }
+        },
+      };
+
+      const dataProxy = new Proxy(data, proxyValidator);
+
+      const dataPathname = nextPathFromSubscriber(dataProxy);
 
       if (disabledNavigation === true) {
         if (dataPathname !== locationRef.current.currentPath) {
@@ -142,7 +148,7 @@ export function usePrompt(disabledNavigation: boolean) {
 
         setNestedValue(
           data,
-          nextPathFromSubscriber as string,
+          pathProperty.join("."),
           locationRef.current.currentPath
         );
       }

@@ -2,13 +2,13 @@ import React, { createContext, useContext, useMemo } from "react";
 
 type ContextValueType = {
   subscriber: (data: any) => () => void;
-  nextPathFromSubscriber: string;
+  nextPathFromSubscriber: (data: any) => string;
   onSuccess: (pathname: string) => void;
 };
 
 const RoutesSubscribeContext = createContext<ContextValueType>({
   subscriber: () => () => {},
-  nextPathFromSubscriber: "",
+  nextPathFromSubscriber: () => "",
   onSuccess: () => {},
 });
 
@@ -25,7 +25,11 @@ export function PromptProvider({
   children: React.ReactNode;
 }) {
   const value = useMemo(
-    () => ({ subscriber, nextPathFromSubscriber, onSuccess }),
+    () => ({
+      subscriber,
+      nextPathFromSubscriber,
+      onSuccess,
+    }),
     [subscriber, nextPathFromSubscriber, onSuccess]
   );
 

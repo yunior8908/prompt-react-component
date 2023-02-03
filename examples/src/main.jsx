@@ -44,7 +44,7 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root")).render(
   <PromptProvider
     subscriber={router.subscribe}
-    nextPathFromSubscriber="location.pathname"
+    nextPathFromSubscriber={({ location }) => location.pathname}
     onSuccess={router.navigate}
   >
     <RouterProvider router={router} />
